@@ -737,7 +737,7 @@ describe('Statements', () => {
 
     expect(first).toBe(structureType);
     expect(second).toBe(createUnion(true, integerType, noneType));
-    expect(returns).toBe(structureType);
+    expect(returns).toBe(integerType);
   });
 
   test('set valid', () => {
@@ -801,5 +801,222 @@ describe('Statements', () => {
       expect(error.range.start).toEqual(location.start);
       expect(error.range.end).toEqual(location.end);
     }
+  });
+});
+
+
+const typeHintManual = `
+function example { // #returns: int
+  parameter x. // #type: string
+  parameter y. // #type: scalar
+
+  print(x).
+  print(y).
+  return 10.
+}
+`;
+
+const typeHintAutomaticDetectionNoneReturn = `
+function example {
+  parameter x is "abc". 
+  parameter y is 10.
+
+  print(x).
+  print(y).
+}
+`;
+
+const typeHintAutomaticDetectionStructReturn = `
+function example {
+  parameter x is "abc". 
+  parameter y.
+
+  print(x).
+  print(y).
+  return y.
+}
+`;
+
+const typeHintAutomaticDetectionIntReturn = `
+function example {
+  parameter x is "abc". 
+  parameter y is 10.
+
+  print(x).
+  print(y).
+  return 2 * y.
+}
+`;
+
+const typeHintManualOverrideValid = `
+function example { // #returns: boolean
+  parameter x is "0:/boot/boot.ks" // #type: path
+  parameter y is 10. // #type: scalar
+
+  print(x).
+  print(y).
+  return true.
+}
+`;
+
+describe('Type Hinting', () => {
+  test('manual type hinting', () => {
+    const results = checkSource(typeHintManual, true);
+    noErrors(results);
+
+    const { table } = results;
+    const symbols = table.allSymbols();
+    const names = new Map(
+      symbols.map((s): [string, KsBaseSymbol] => [s.name.lexeme, s]),
+    );
+
+    declaredTests(names, 'x', KsSymbolKind.parameter, stringType);
+    declaredTests(names, 'y', KsSymbolKind.parameter, scalarType);
+    declaredTests(names, 'example', KsSymbolKind.function);
+
+    const func = names.get('example')! as KsFunction;
+    const tracker = func.name.tracker!;
+    const type = tracker.declared.type;
+
+    const callSignature = type.callSignature();
+    expect(callSignature).toBeDefined();
+
+    const params = callSignature!.params();
+    const returns = callSignature!.returns();
+
+    expect(params).toHaveLength(2);
+    const [first, second] = params;
+
+    expect(first).toBe(stringType);
+    expect(second).toBe(scalarType);
+    expect(returns).toBe(integerType);
+  });
+
+  test('type automatic detection none', () => {
+    const results = checkSource(typeHintAutomaticDetectionNoneReturn, true);
+    noErrors(results);
+
+    const { table } = results;
+    const symbols = table.allSymbols();
+    const names = new Map(
+      symbols.map((s): [string, KsBaseSymbol] => [s.name.lexeme, s]),
+    );
+
+    declaredTests(names, 'x', KsSymbolKind.parameter, stringType);
+    declaredTests(names, 'y', KsSymbolKind.parameter, integerType);
+    declaredTests(names, 'example', KsSymbolKind.function);
+
+    const func = names.get('example')! as KsFunction;
+    const tracker = func.name.tracker!;
+    const type = tracker.declared.type;
+
+    const callSignature = type.callSignature();
+    expect(callSignature).toBeDefined();
+
+    const params = callSignature!.params();
+    const returns = callSignature!.returns();
+
+    expect(params).toHaveLength(2);
+    const [first, second] = params;
+
+    expect(first).toBe(createUnion(true, stringType, noneType));
+    expect(second).toBe(createUnion(true, integerType, noneType));
+    expect(returns).toBe(noneType);
+  });
+
+  test('type automatic detection integer', () => {
+    const results = checkSource(typeHintAutomaticDetectionIntReturn, true);
+    noErrors(results);
+
+    const { table } = results;
+    const symbols = table.allSymbols();
+    const names = new Map(
+      symbols.map((s): [string, KsBaseSymbol] => [s.name.lexeme, s]),
+    );
+
+    declaredTests(names, 'x', KsSymbolKind.parameter, stringType);
+    declaredTests(names, 'y', KsSymbolKind.parameter, integerType);
+    declaredTests(names, 'example', KsSymbolKind.function);
+
+    const func = names.get('example')! as KsFunction;
+    const tracker = func.name.tracker!;
+    const type = tracker.declared.type;
+
+    const callSignature = type.callSignature();
+    expect(callSignature).toBeDefined();
+
+    const params = callSignature!.params();
+    const returns = callSignature!.returns();
+
+    expect(params).toHaveLength(2);
+    const [first, second] = params;
+
+    expect(first).toBe(createUnion(true, stringType, noneType));
+    expect(second).toBe(createUnion(true, integerType, noneType));
+    expect(returns).toBe(integerType);
+  });
+
+  test('type automatic detection struct', () => {
+    const results = checkSource(typeHintAutomaticDetectionStructReturn, true);
+    noErrors(results);
+
+    const { table } = results;
+    const symbols = table.allSymbols();
+    const names = new Map(
+      symbols.map((s): [string, KsBaseSymbol] => [s.name.lexeme, s]),
+    );
+
+    declaredTests(names, 'x', KsSymbolKind.parameter, stringType);
+    declaredTests(names, 'y', KsSymbolKind.parameter, structureType);
+    declaredTests(names, 'example', KsSymbolKind.function);
+
+    const func = names.get('example')! as KsFunction;
+    const tracker = func.name.tracker!;
+    const type = tracker.declared.type;
+
+    const callSignature = type.callSignature();
+    expect(callSignature).toBeDefined();
+
+    const params = callSignature!.params();
+    const returns = callSignature!.returns();
+
+    expect(params).toHaveLength(2);
+    const [first, second] = params;
+
+    expect(first).toBe(createUnion(true, stringType, noneType));
+    expect(second).toBe(structureType);
+    expect(returns).toBe(structureType);
+  });
+
+  test('type manual override valid', () => {
+    const results = checkSource(typeHintManualOverrideValid, true);
+    noErrors(results);
+
+    const { table } = results;
+    const symbols = table.allSymbols();
+    const names = new Map(
+      symbols.map((s): [string, KsBaseSymbol] => [s.name.lexeme, s]),
+    );
+
+    declaredTests(names, 'x', KsSymbolKind.parameter, pathType);
+    declaredTests(names, 'y', KsSymbolKind.parameter, scalarType);
+    declaredTests(names, 'example', KsSymbolKind.function);
+
+    const func = names.get('example')! as KsFunction;
+    const tracker = func.name.tracker!;
+    const type = tracker.declared.type;
+
+    const callSignature = type.callSignature();
+    expect(callSignature).toBeDefined();
+
+    const params = callSignature!.params();
+    const returns = callSignature!.returns();
+
+    expect(params).toHaveLength(2);
+    const [first, second] = params;
+    
+    expect(first).toBe(createUnion(true, pathType, noneType));
+    expect(second).toBe(createUnion(true, scalarType, noneType));
+    expect(returns).toBe(booleanType);
   });
 });

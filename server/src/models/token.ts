@@ -60,10 +60,6 @@ export class Token implements TokenBase {
     };
   }
 
-  public get getRef(): Token | undefined {
-    return this.ref;
-  }
-
   /**
    * Convert the token to a human readable string
    */

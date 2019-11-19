@@ -66,6 +66,7 @@ import { Type } from './models/types/type';
 import { CallSignature } from './models/types/callSignature';
 import { TypeHint } from './ksTypes/typeHint';
 
+
 // TODO: KRIS
 //import { SymbolTable } from '../analysis/models/symbolTable';
 
@@ -234,60 +235,48 @@ export class TypeChecker
     const errors = this.checkStmt(decl.block);
     const { tracker } = decl.identifier;
 
-    let requiredParameters: Decl.Parameter[] = [];
-    let optionalParameters: Decl.DefaultParam[] = [];
-    for (const param of decl.block.stmts.filter(x => x instanceof Decl.Param)) {
-      const temp = <Decl.Param> param;
-      
-      temp.optionalParameters.forEach(element => {
-        optionalParameters.push(element);
-      });
-      temp.requiredParameters.forEach(element => {
-        requiredParameters.push(element);
-      });
-    }
-    
-
-    // debug code:
-/*     for (const required of requiredParameters) {
-      const { tracker } = required.identifier;
-
-      if (this.isBasicTracker(tracker)) {
-        if (required.typeHint && TypeHint.get(required.typeHint)) {
-            tracker.declareType(TypeHint.get(required.typeHint) || structureType);
-        } else {
-            tracker.declareType(structureType);
-        }
-      }
-    }
-    for (const optional of optionalParameters) {
-      const valueResult = this.checkExpr(optional.value);
-      const { tracker } = optional.identifier;
-
-      if (this.isBasicTracker(tracker)) {
-        if (optional.typeHint && TypeHint.get(optional.typeHint)) {
-          tracker.declareType(TypeHint.get(optional.typeHint) || valueResult.type);
-        } else {
-          tracker.declareType(valueResult.type);
-        }
-      }
-    } */
-
     if (!empty(tracker) && tracker.kind === TrackerKind.basic) {
       const { symbol } = tracker.declared;
       if (symbol.tag === KsSymbolKind.function) {
         const paramsTypes: IType[] = [];
-        //console.log(symbol.name, decl, requiredParameters, optionalParameters);
         // TODO eventually we should tag ks parameter to the function type
-        for (let i = 0; i < symbol.requiredParameters; i += 1) {
-          paramsTypes.push(requiredParameters[i].identifier.tracker?.declared.type || structureType);
+        for (const param of symbol.requiredParameters) {
+          paramsTypes.push(param.identifier.tracker ? param.identifier.tracker.declared.type : structureType);
         }
-        for (let i = 0; i < symbol.optionalParameters; i += 1) {
-          paramsTypes.push(createUnion(true, optionalParameters[i].identifier.tracker?.declared.type.assignmentType() || structureType, noneType));
+        for (const param of symbol.optionalParameters) {
+          paramsTypes.push(createUnion(true, param.identifier.tracker ? param.identifier.tracker.declared.type.assignmentType() : structureType, noneType));
         }
 
-        let returnType: IType = symbol.returnValue ? structureType : noneType;
+        let returnType: IType = noneType;
 
+        // Not sure if it is good to do visitSuffix. Should write helperClasses to just get the class 
+        //
+        // if (symbol.returnValue instanceof Expr.Suffix &&
+        //   symbol.returnValue.suffixTerm.atom instanceof SuffixTerm.Identifier &&
+        //   symbol.returnValue.suffixTerm.atom.token.tracker) {
+        //   returnType = symbol.returnValue.suffixTerm.atom.token.tracker.declared.type;
+        // }
+        // if (symbol.returnValue instanceof Expr.Suffix &&
+        //   symbol.returnValue.suffixTerm.atom instanceof SuffixTerm.Literal)  {
+        //   returnType = TypeHint.get(symbol.returnValue.suffixTerm.atom.token.typeString) || structureType;
+        // }
+        if (symbol.returnValue instanceof Expr.Suffix) {
+          returnType = this.visitSuffix(symbol.returnValue).type;
+        } else if (symbol.returnValue instanceof Expr.Binary) {
+          returnType = this.visitBinary(symbol.returnValue).type;
+        } else if (symbol.returnValue instanceof Expr.Factor) {
+          returnType = this.visitFactor(symbol.returnValue).type;
+        } else if (symbol.returnValue instanceof Expr.Lambda) {
+          returnType = this.visitLambda(symbol.returnValue).type;
+        } else if (symbol.returnValue instanceof Expr.Unary) {
+          returnType = this.visitUnary(symbol.returnValue).type;
+        } else if (symbol.returnValue instanceof Expr.Ternary) {
+          returnType = this.visitTernary(symbol.returnValue).type;
+        } else if (symbol.returnValue) {
+          returnType = structureType;
+        }
+
+        // Override return type from hint.
         if (decl.typeHint && TypeHint.get(decl.typeHint.toString())) {
           returnType = TypeHint.get(decl.typeHint.toString()) || returnType;
         }

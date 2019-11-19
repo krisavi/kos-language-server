@@ -131,6 +131,7 @@ export class Scanner {
       ),
       kind: ScanKind.Type,
     };
+
     this.regionResult = {
       result: new Token(
         TokenType.region,
@@ -198,7 +199,7 @@ export class Scanner {
           case ScanKind.Type:
             // Were not able to reference earlier to lookback
             // Gets first identifier on the line where type is defined
-            result.result.ref = tokens.filter(token => token.type === TokenType.identifier && token.start.line == result.result.start.line)[0];
+            result.result.ref = tokens.find(token => token.type === TokenType.identifier && token.start.line == result.result.start.line);
             types.push(result.result);
             break;
           case ScanKind.Whitespace:

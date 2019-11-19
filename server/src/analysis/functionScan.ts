@@ -20,9 +20,9 @@ export class FunctionScan extends TreeTraverse {
   constructor() {
     super();
     this.result = {
-      requiredParameters: 0,
-      optionalParameters: 0,
-      return: false,
+      requiredParameters: [],
+      optionalParameters: [],
+      return: undefined,
     };
   }
 
@@ -32,9 +32,9 @@ export class FunctionScan extends TreeTraverse {
    */
   public scan(node: Stmt.Block): IFunctionScanResult {
     this.result = {
-      requiredParameters: 0,
-      optionalParameters: 0,
-      return: false,
+      requiredParameters: [],
+      optionalParameters: [],
+      return: undefined,
     };
 
     this.stmtAction(node);
@@ -46,8 +46,16 @@ export class FunctionScan extends TreeTraverse {
    * Indicate that the function has a return statement
    * @param _ return statement
    */
-  public visitReturn(_: Stmt.Return): void {
-    this.result.return = true;
+  public visitReturn(_: Stmt.Return): void { 
+    if (_.value && (Expr.validExpressions.some(cls => _.value instanceof cls))) {
+      this.result.return = _.value
+    }
+    else if (_.value) {
+      this.result.return = _.value
+    }
+    else {
+      this.result.return = undefined;
+    }
   }
 
   /**
@@ -61,8 +69,8 @@ export class FunctionScan extends TreeTraverse {
    * @param decl parameter declaration
    */
   public visitDeclParameter(decl: Decl.Param): void {
-    this.result.requiredParameters += decl.requiredParameters.length;
-    this.result.optionalParameters += decl.optionalParameters.length;
+    this.result.requiredParameters.push.apply(this.result.requiredParameters, decl.requiredParameters);
+    this.result.optionalParameters.push.apply(this.result.optionalParameters, decl.optionalParameters);
   }
 
   /**

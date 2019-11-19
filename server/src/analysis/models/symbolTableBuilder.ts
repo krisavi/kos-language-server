@@ -1,5 +1,5 @@
 import { empty } from '../../utilities/typeGuards';
-import { ScopeKind } from '../../parser/types';
+import { ScopeKind, IExpr } from '../../parser/types';
 import { KsVariable } from '../../models/variable';
 import {
   EnvironmentNode,
@@ -44,6 +44,7 @@ import { cleanLocation } from '../../utilities/clean';
 import { Token } from '../../models/token';
 import { KsParameter } from '../../models/parameter';
 import { IType } from '../../typeChecker/types';
+import { Parameter, DefaultParam } from '../../parser/models/declare';
 
 /**
  * The Symbol table builder is used to declare new symbols and track new symbols
@@ -398,9 +399,9 @@ export class SymbolTableBuilder {
   public declareFunction(
     scopeType: ScopeKind,
     token: Token,
-    requiredParameters: number,
-    optionalParameters: number,
-    returnValue: boolean,
+    requiredParameters: Parameter[],
+    optionalParameters: DefaultParam[],
+    returnValue?: IExpr,
     type?: IType,
   ): Maybe<Diagnostic> {
     const conflictTracker = this.lookupKind(

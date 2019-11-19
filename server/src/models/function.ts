@@ -1,6 +1,7 @@
-import { ScopeKind } from '../parser/types';
+import { ScopeKind, IExpr } from '../parser/types';
 import { KsSymbolKind } from '../analysis/types';
 import { Token } from './token';
+import { Parameter, DefaultParam } from '../parser/models/declare';
 
 /**
  * A class containing the information of a function
@@ -17,9 +18,9 @@ export class KsFunction {
   constructor(
     public readonly scope: ScopeKind,
     public readonly name: Token,
-    public readonly requiredParameters: number,
-    public readonly optionalParameters: number,
-    public readonly returnValue: boolean,
+    public readonly requiredParameters: Parameter[],
+    public readonly optionalParameters: DefaultParam[],
+    public readonly returnValue?: IExpr,
   ) {
   }
 

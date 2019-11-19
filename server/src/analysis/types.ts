@@ -11,6 +11,7 @@ import { Environment } from './models/environment';
 import { TypeTracker } from './models/typeTracker';
 import { IType } from '../typeChecker/types';
 import { KsGrouping } from '../models/grouping';
+import { DefaultParam, Parameter } from '../parser/models/declare';
 
 /**
  * The result of a function scan
@@ -19,17 +20,17 @@ export interface IFunctionScanResult {
   /**
    * The number of optionals parameters
    */
-  optionalParameters: number;
+  optionalParameters: DefaultParam[];
 
   /**
    * The number of required parameters
    */
-  requiredParameters: number;
+  requiredParameters: Parameter[];
 
   /**
    * Does the function return a value
    */
-  return: boolean;
+  return: Maybe<IExpr>;
 }
 
 /**

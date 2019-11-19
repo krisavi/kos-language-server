@@ -78,6 +78,7 @@ import { empty } from '../utilities/typeGuards';
 import { partType } from '../typeChecker/ksTypes/parts/part';
 import { kosProcessorFieldsType } from '../typeChecker/ksTypes/kosProcessorFields';
 import { orbitableVelocityType } from '../typeChecker/ksTypes/orbitalVelocity';
+import { Parameter } from '../parser/models/declare';
 
 const functionTypes: [string[], IType][] = [
   [['abs'], createFunctionType('abs', scalarType, scalarType)],
@@ -807,9 +808,10 @@ export const standardLibraryBuilder = (caseKind: CaseKind): SymbolTable => {
   for (const [segements, functionType] of functionTypes) {
     const callSignature = functionType.callSignature();
 
-    const parameterCount = empty(callSignature)
-      ? -1
-      : callSignature.params.length;
+    let parameter : Parameter[] = [];
+    if (!empty(callSignature)) {
+      callSignature.params().forEach(param => parameter.push(new Parameter(new Token(TokenType.identifier,toCase(caseKind, ...segements),undefined,new Marker(0, 0),new Marker(0, 0),builtIn), param.name)));
+    }
 
     libraryBuilder.declareFunction(
       ScopeKind.global,
@@ -821,9 +823,9 @@ export const standardLibraryBuilder = (caseKind: CaseKind): SymbolTable => {
         new Marker(0, 0),
         builtIn,
       ),
-      parameterCount,
-      0,
-      false,
+      parameter,
+      [],
+      undefined,
       functionType,
     );
   }

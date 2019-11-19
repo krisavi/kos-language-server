@@ -8,8 +8,10 @@ import { NodeBase } from './base';
 import { Token } from '../../models/token';
 
 export abstract class Decl extends Stmt {
-  constructor() {
+  public readonly typeHint?: ITypeHint;
+  constructor(builder: NodeDataBuilder<Var>) {
     super();
+    this.typeHint = builder.typeHint;
   }
 }
 
@@ -103,15 +105,13 @@ export class Var extends Decl {
   public readonly toIs: Token;
   public readonly value: IExpr;
   public readonly scope: Scope;
-  public readonly typeHint?: ITypeHint;
 
   constructor(builder: NodeDataBuilder<Var>) {
-    super();
+    super(builder);
     this.identifier = unWrap(builder.identifier);
     this.toIs = unWrap(builder.toIs);
     this.value = unWrap(builder.value);
     this.scope = unWrap(builder.scope);
-    this.typeHint = builder.typeHint;
   }
 
   public toLines(): string[] {
@@ -150,16 +150,14 @@ export class Lock extends Decl {
   public readonly to: Token;
   public readonly value: IExpr;
   public readonly scope?: Scope;
-  public readonly typeHint?: ITypeHint;
 
   constructor(builder: NodeDataBuilder<Lock>) {
-    super();
+    super(builder);
     this.lock = unWrap(builder.lock);
     this.identifier = unWrap(builder.identifier);
     this.to = unWrap(builder.to);
     this.value = unWrap(builder.value);
     this.scope = builder.scope;
-    this.typeHint = builder.typeHint;
   }
 
   public toLines(): string[] {
@@ -209,15 +207,13 @@ export class Func extends Decl {
   public readonly identifier: Token;
   public readonly block: Block;
   public readonly scope?: Scope;
-  public readonly typeHint?: ITypeHint;
 
   constructor(builder: NodeDataBuilder<Func>) {
-    super();
+    super(builder);
     this.functionToken = unWrap(builder.functionToken);
     this.identifier = unWrap(builder.identifier);
     this.block = unWrap(builder.block);
     this.scope = builder.scope;
-    this.typeHint = builder.typeHint;
   }
 
   public toLines(): string[] {
@@ -260,15 +256,13 @@ export class Param extends Decl {
   public readonly requiredParameters: Parameter[];
   public readonly optionalParameters: DefaultParam[];
   public readonly scope?: Scope;
-  public readonly typeHint?: ITypeHint;
 
   constructor(builder: NodeDataBuilder<Param>) {
-    super();
+    super(builder);
     this.parameterToken = unWrap(builder.parameterToken);
     this.requiredParameters = unWrap(builder.requiredParameters);
     this.optionalParameters = unWrap(builder.optionalParameters);
     this.scope = builder.scope;
-    this.typeHint = builder.typeHint;
   }
 
   public toLines(): string[] {

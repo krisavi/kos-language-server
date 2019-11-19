@@ -77,10 +77,7 @@ export class Parser {
       const file = splits[splits.length - 1];
 
       this.logger.info(
-        `Parsing started for ${file} with ${this.tokens.length} tokens.`,
-      );
-      this.logger.info(
-        `Parsing started for ${file} with ${this.types.length} tokens.`,
+        `Parsing started for ${file} with ${this.tokens.length} tokens and ${this.types.length} type hints.`,
       );
 
       const statements: Stmt.Stmt[] = [];
