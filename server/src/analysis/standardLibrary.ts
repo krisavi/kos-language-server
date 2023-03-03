@@ -345,8 +345,8 @@ const functionTypes: [string[], IType][] = [
     createFunctionType(
       'movepath',
       noneType,
-      createUnion(true, integerType, noneType),
-      createUnion(true, integerType, noneType),
+      createUnion(true, stringType, pathType),
+      createUnion(true, stringType, pathType),
     ),
   ],
   [
@@ -521,7 +521,7 @@ const functionTypes: [string[], IType][] = [
       createVarType(structureType),
     ),
   ],
-  [['stage'], createFunctionType('stage', noneType)],
+  [['stage'], createFunctionType('stage', stageType)],
   [['stop', 'all', 'voices'], createFunctionType('stopallvoices', noneType)],
   [
     ['switch'],
@@ -769,7 +769,7 @@ const variables: [string[], IType][] = [
   [['terminal'], terminalStructType],
   [['time'], timeSpanType],
   [['up'], directionType],
-  [['velocity'], orbitableType],
+  [['velocity'], orbitableVelocityType],
   [['version'], versionInfoType],
   [['vertical', 'speed'], scalarType],
   [['volume:name'], stringType],
